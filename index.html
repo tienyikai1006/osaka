@@ -2235,6 +2235,11 @@ async function initCloudSync() {
     }
 
     cloudReady = true;
+    if (itineraryRepairNeeded) {
+      itineraryRepairNeeded = false;
+      await saveCloudData();
+      setCloudStatus('☁️ 已修復並同步');
+    }
 
     onValue(tripRef, (snapshot) => {
       if (!snapshot.exists()) return;
@@ -2246,7 +2251,13 @@ async function initCloudSync() {
       applyPayload(cloudData);
       saveLocalData();
       render();
-      setCloudStatus('☁️ 已同步');
+      if (itineraryRepairNeeded) {
+        itineraryRepairNeeded = false;
+        saveCloudData();
+        setCloudStatus('☁️ 已修復並同步');
+      } else {
+        setCloudStatus('☁️ 已同步');
+      }
     }, (err) => {
       console.warn('雲端監聽失敗。', err);
       setCloudStatus('☁️ 雲端連線異常');
@@ -2805,6 +2816,40 @@ let itinerary = [
 
 const defaultItinerary = JSON.parse(JSON.stringify(itinerary));
 
+function normalizeItineraryData(value) {
+  const base = safeClone(defaultItinerary);
+  const source = Array.isArray(value) ? value : base;
+  const normalized = base.map((baseDay, di) => {
+    const rawDay = source[di] && typeof source[di] === 'object' ? source[di] : {};
+    const day = { ...baseDay, ...rawDay };
+    const rawGroups = Array.isArray(rawDay.groups) ? rawDay.groups : (Array.isArray(day.groups) ? day.groups : []);
+    day.groups = rawGroups.map((rawGroup, gi) => {
+      const baseGroup = (baseDay.groups || [])[gi] || { time: rawGroup?.time || '下午', items: [] };
+      const group = rawGroup && typeof rawGroup === 'object' ? { ...baseGroup, ...rawGroup } : safeClone(baseGroup);
+      group.time = group.time || baseGroup.time || '下午';
+      group.items = Array.isArray(group.items) ? group.items.filter(Boolean) : [];
+      return group;
+    });
+    if (!day.groups.length && Array.isArray(baseDay.groups)) {
+      day.groups = safeClone(baseDay.groups);
+      itineraryRepairNeeded = true;
+    }
+    return day;
+  });
+
+  // Firebase Realtime Database 不會穩定保留空陣列；如果 Day 5 被讀成全空，
+  // 自動還原成原始 Day 5，避免「刪一筆後整天消失」。
+  const day5 = normalized[4];
+  const day5Items = day5?.groups?.reduce((sum, group) => sum + (Array.isArray(group.items) ? group.items.length : 0), 0) || 0;
+  const baseDay5Items = base[4]?.groups?.reduce((sum, group) => sum + (Array.isArray(group.items) ? group.items.length : 0), 0) || 0;
+  if (baseDay5Items > 0 && day5Items === 0) {
+    normalized[4] = safeClone(base[4]);
+    itineraryRepairNeeded = true;
+  }
+
+  return normalized;
+}
+
 let activeDay = 0;
 let expenseViewMode = 'total';
 let settlementRecords = [];
@@ -2815,6 +2860,7 @@ let hkoForecastByDate = {};
 const TRIP_YEAR = 2026;
 let dragState = null;
 let currentDropTarget = null;
+let itineraryRepairNeeded = false;
 
 function clearDropIndicator() {
   document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
@@ -3319,8 +3365,11 @@ function renderPanels() {
     <button class="btn-add-item" onclick="openAddModal(${di})">＋ 新增</button>`;
   dc.appendChild(banner);
 
-  d.groups.forEach((g, gi) => {
-    const tc = g.time === '早上' ? 'tp-morn' : g.time.includes('下午') ? 'tp-noon' : 'tp-night';
+  const groups = Array.isArray(d.groups) ? d.groups : [];
+  groups.forEach((g, gi) => {
+    if (!Array.isArray(g.items)) g.items = [];
+    const items = g.items;
+    const tc = g.time === '早上' ? 'tp-morn' : String(g.time || '').includes('下午') ? 'tp-noon' : 'tp-night';
     const tRow = document.createElement('div');
     tRow.className = 'time-row';
     tRow.innerHTML = `<div class="time-pill ${tc}">${escapeHTML(g.time)}</div><div class="time-div"></div>`;
@@ -3334,13 +3383,13 @@ function renderPanels() {
     list.addEventListener('dragleave', handleListDragLeave);
     list.addEventListener('drop', handleListDrop);
 
-    if (!g.items.length) {
+    if (!items.length) {
       const empty = document.createElement('div');
       empty.style.cssText = 'padding:10px 16px;color:var(--text3);font-size:12px;font-style:italic;';
       empty.textContent = '尚無行程';
       list.appendChild(empty);
     } else {
-      g.items.forEach((item, ii) => {
+      items.forEach((item, ii) => {
         const row = document.createElement('div');
         row.className = 'item-row';
         row.draggable = true;
@@ -3425,9 +3474,15 @@ function handleListDrop(e) {
   dragState = null;
 }
 function moveItem(fromDi, fromGi, fromIi, toDi, toGi, toIndex) {
-  const sourceItems = itinerary[fromDi].groups[fromGi].items;
-  const [moved] = sourceItems.splice(fromIi, 1);
-  const targetItems = itinerary[toDi].groups[toGi].items;
+  const sourceGroup = itinerary?.[fromDi]?.groups?.[fromGi];
+  const targetGroup = itinerary?.[toDi]?.groups?.[toGi];
+  if (!sourceGroup || !targetGroup) return;
+  if (!Array.isArray(sourceGroup.items)) sourceGroup.items = [];
+  if (!Array.isArray(targetGroup.items)) targetGroup.items = [];
+  if (!sourceGroup.items[fromIi]) return;
+
+  const [moved] = sourceGroup.items.splice(fromIi, 1);
+  const targetItems = targetGroup.items;
 
   if (toIndex < 0) toIndex = 0;
   if (toIndex > targetItems.length) toIndex = targetItems.length;
@@ -3447,8 +3502,14 @@ function openAddModal(di) {
   document.getElementById('itemModal').classList.add('open');
 }
 function openEditModal(di, gi, ii) {
+  const group = itinerary?.[di]?.groups?.[gi];
+  if (!group || !Array.isArray(group.items) || !group.items[ii]) {
+    alert('找不到這筆行程，已重新整理。');
+    render();
+    return;
+  }
   editTarget = {di, gi, ii}; pendingDayIdx = di;
-  const item = itinerary[di].groups[gi].items[ii];
+  const item = group.items[ii];
   document.getElementById('itemModalTitle').textContent = '編輯行程';
   document.getElementById('f-type').value = item.type;
   document.getElementById('f-time').value = itinerary[di].groups[gi].time;
@@ -3473,6 +3534,8 @@ function saveItem() {
   const time = document.getElementById('f-time').value;
   if (editTarget) {
     const {di, gi, ii} = editTarget;
+    if (!itinerary?.[di]?.groups?.[gi]) { alert('找不到原本的行程位置，請重新操作一次。'); return; }
+    if (!Array.isArray(itinerary[di].groups[gi].items)) itinerary[di].groups[gi].items = [];
     if (itinerary[di].groups[gi].time !== time) {
       itinerary[di].groups[gi].items.splice(ii, 1);
       let tg = itinerary[di].groups.find(g=>g.time===time);
@@ -3487,8 +3550,15 @@ function saveItem() {
   closeItemModal(); afterDataChange();
 }
 function deleteItem(di, gi, ii) {
+  const group = itinerary?.[di]?.groups?.[gi];
+  if (!group || !Array.isArray(group.items) || !group.items[ii]) {
+    alert('找不到這筆行程，已重新整理。');
+    render();
+    return;
+  }
   if (!confirm('確定刪除？')) return;
-  itinerary[di].groups[gi].items.splice(ii, 1); afterDataChange();
+  group.items.splice(ii, 1);
+  afterDataChange();
 }
 
 // ── EXPENSE MODAL ──
@@ -3617,7 +3687,7 @@ function applyPayload(data = {}) {
   todos = safeArray(data.todos, todos);
   shoppingList = normalizeShoppingList(safeArray(data.shoppingList, shoppingList));
   expenses = safeArray(data.expenses, expenses);
-  itinerary = safeArray(data.itinerary, itinerary);
+  itinerary = normalizeItineraryData(data.itinerary);
   settlementRecords = safeArray(data.settlementRecords, settlementRecords);
   settledOffsets = (data.settledOffsets && typeof data.settledOffsets === 'object')
     ? data.settledOffsets
