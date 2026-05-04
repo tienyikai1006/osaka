@@ -1956,6 +1956,240 @@ body {
   .taiko-next{ right: 8px; }
 }
 
+
+
+/* ── UI FIX: TODO CHIP GAP + FLIGHT BADGE ALIGNMENT ── */
+.todo-chip{
+  padding-right: 12px !important;
+}
+.todo-chip.done{
+  padding-right: 34px !important;
+}
+
+.flight-card{
+  align-items: center !important;
+}
+.flight-main{
+  flex: 1 1 auto;
+  width: 100%;
+}
+.flight-topline{
+  display: grid !important;
+  grid-template-columns: max-content max-content;
+  align-items: center !important;
+  justify-content: start !important;
+  gap: 10px !important;
+  flex-wrap: nowrap !important;
+}
+.flight-airline-logo,
+.flight-num{
+  height: 34px !important;
+  min-height: 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+.flight-airline-logo{
+  padding: 0 13px 0 10px !important;
+}
+.flight-num{
+  min-width: 78px;
+  padding: 0 13px !important;
+  color: rgba(255,255,255,0.72) !important;
+}
+.flight-airline-logo .logo-mark{
+  width: 24px !important;
+  height: 24px !important;
+  line-height: 1 !important;
+}
+.flight-airline-logo .logo-text{
+  line-height: 1 !important;
+}
+
+
+/* ── FLIGHT META REDESIGN ── */
+.flight-topline{
+  display:block !important;
+}
+.flight-meta{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  min-height: 40px;
+  max-width: 100%;
+  padding: 4px;
+  padding-left: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(4px);
+}
+.flight-meta-main{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  min-width: 0;
+  padding-left: 2px;
+}
+.flight-meta-mark{
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  color:#fff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .02em;
+}
+.flight-meta-logo{
+  width: 62px;
+  height: 26px;
+  border-radius: 999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  padding: 3px 8px;
+  background: rgba(255,255,255,0.94);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+.flight-meta-logo img{
+  display:block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.flight-meta-name{
+  color:#fff;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .01em;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flight-meta-code{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 86px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  border-left: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.84);
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  flex-shrink: 0;
+}
+.flight-meta-tigerair .flight-meta-mark{
+  background: linear-gradient(135deg, #ff9800, #ff6a00);
+}
+.flight-meta-eva .flight-meta-mark{
+  background: linear-gradient(135deg, #2f8f63, #19694a);
+}
+.flight-meta-generic .flight-meta-mark{
+  background: linear-gradient(135deg, #6380a8, #3f5f86);
+}
+@media (max-width: 520px){
+  .flight-meta{
+    gap: 10px;
+    min-height: 36px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .flight-meta-main{
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .flight-meta-mark{
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  .flight-meta-logo{
+    width: 54px;
+    height: 24px;
+    padding: 3px 7px;
+  }
+  .flight-meta-name{
+    font-size: 13px;
+  }
+  .flight-meta-code{
+    min-width: 74px;
+    height: 30px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+}
+
+
+/* ── AIRLINE LOGO ONLY OVERRIDE ── */
+.flight-meta{
+  gap: 10px !important;
+  padding: 5px 6px !important;
+  width: fit-content;
+}
+.flight-meta-main{
+  padding-left: 0 !important;
+  flex: 0 0 auto !important;
+}
+.flight-meta-logo{
+  width: 92px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.flight-meta-logo img{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+.flight-meta-logo-eva{
+  width: 84px !important;
+}
+.flight-meta-code{
+  min-width: 74px !important;
+  height: 30px !important;
+  padding: 0 13px !important;
+  border-left: none !important;
+  background: rgba(255,255,255,0.13) !important;
+}
+@media (max-width: 520px){
+  .flight-meta{
+    width: auto !important;
+    max-width: 100% !important;
+    gap: 8px !important;
+  }
+  .flight-meta-logo{
+    width: 82px !important;
+    height: 24px !important;
+    padding: 0 !important;
+  }
+  .flight-meta-logo-eva{
+    width: 74px !important;
+  }
+  .flight-meta-code{
+    min-width: 68px !important;
+    height: 28px !important;
+    padding: 0 11px !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3490,12 +3724,14 @@ function getAirlineInfo(flightNum='') {
     IT: {
       key: 'tigerair',
       label: 'Tigerair Taiwan',
-      mark: 'IT'
+      mark: 'IT',
+      logoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Tigerair_Taiwan_logo.svg'
     },
     BR: {
       key: 'eva',
       label: 'EVA Air',
-      mark: 'BR'
+      mark: 'BR',
+      logoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Logo_EVA_Air_02.svg'
     }
   };
   return map[code] || {
@@ -3505,9 +3741,12 @@ function getAirlineInfo(flightNum='') {
   };
 }
 
-function renderAirlineLogo(flightNum='') {
+function renderFlightMeta(flightNum='') {
   const airline = getAirlineInfo(flightNum);
-  return `<span class="flight-airline-logo ${airline.key}"><span class="logo-mark">${airline.mark}</span><span class="logo-text">${airline.label}</span></span>`;
+  const markHTML = airline.logoUrl
+    ? `<span class="flight-meta-logo flight-meta-logo-${airline.key}"><img src="${airline.logoUrl}" alt="${airline.label} logo" loading="lazy" decoding="async"></span>`
+    : `<span class="flight-meta-mark">${airline.mark}</span><span class="flight-meta-name">${airline.label}</span>`;
+  return `<div class="flight-meta flight-meta-${airline.key}"><div class="flight-meta-main">${markHTML}</div><div class="flight-meta-code">${escapeHTML(flightNum)}</div></div>`;
 }
 
 function formatGoRoute(text='') {
@@ -3543,7 +3782,7 @@ function renderPanels() {
   if (d.flight) {
     const fc = document.createElement('div');
     fc.className = 'flight-card';
-    fc.innerHTML = `<div class="flight-icon">✈️</div><div class="flight-main"><div class="flight-topline">${renderAirlineLogo(d.flight.num)}<div class="flight-num">${escapeHTML(d.flight.num)}</div></div><div class="flight-route">${escapeHTML(d.flight.route)}</div><div class="flight-time">${escapeHTML(d.flight.time)}</div></div>`;
+    fc.innerHTML = `<div class="flight-icon">✈️</div><div class="flight-main"><div class="flight-topline">${renderFlightMeta(d.flight.num)}</div><div class="flight-route">${escapeHTML(d.flight.route)}</div><div class="flight-time">${escapeHTML(d.flight.time)}</div></div>`;
     panel.appendChild(fc);
   }
 
