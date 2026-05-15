@@ -778,6 +778,27 @@ body { background:var(--bg); color:var(--text); font-family:'Noto Sans TC',sans-
   font-size:10px;
   font-weight:900;
 }
+.trip-cost-status {
+  border:none;
+  cursor:pointer;
+  font-family:'Noto Sans TC', sans-serif;
+  line-height:1.4;
+}
+.trip-cost-status.unpaid {
+  background:#fff1df;
+  color:#a85a1d;
+  box-shadow: inset 0 0 0 1px #f2d3ab;
+}
+.trip-cost-status.paid {
+  background:#eef5e9;
+  color:#4f6b45;
+  cursor:default;
+}
+.trip-cost-status.unpaid:hover {
+  background:#9f2f24;
+  color:#fff;
+  box-shadow:none;
+}
 .trip-cost-note { margin-top:5px; font-size:11px; color:var(--text3); line-height:1.45; }
 .trip-cost-right { display:flex; align-items:center; gap:8px; }
 .trip-cost-price { font-family:'Nunito', sans-serif; font-size:16px; font-weight:900; color:var(--text); white-space:nowrap; }
@@ -2653,8 +2674,6 @@ body {
         <select id="tc-status">
           <option value="未付款">未付款</option>
           <option value="已付款">已付款</option>
-          <option value="已預訂">已預訂</option>
-          <option value="待確認">待確認</option>
         </select>
       </div>
       <div class="field"><label>備註（選填）</label>
@@ -4155,7 +4174,7 @@ function normalizeTripCosts(list) {
     currency: item?.currency || 'TWD',
     category: tripCostCategories.includes(item?.category) ? item.category : '其他',
     date: item?.date || '',
-    status: item?.status || '未付款',
+    status: item?.status === '已付款' ? '已付款' : '未付款',
     note: item?.note || '',
     createdAt: Number(item?.createdAt || Date.now())
   })).filter(item => item.desc && item.amount > 0);
@@ -4189,7 +4208,7 @@ function renderTripCosts() {
           <div class="trip-cost-title">${escapeHTML(item.desc)}</div>
           <div class="trip-cost-meta">
             <span class="trip-cost-pill">${escapeHTML(item.category)}</span>
-            <span class="trip-cost-pill">${escapeHTML(item.status)}</span>
+            <button class="trip-cost-pill trip-cost-status ${item.status === '已付款' ? 'paid' : 'unpaid'}" type="button" onclick="event.stopPropagation(); toggleTripCostPaid(${index})" ${item.status === '已付款' ? 'disabled' : ''}>${item.status === '已付款' ? '已付款' : '未付款'}</button>
             ${item.date ? `<span class="trip-cost-pill">${escapeHTML(item.date)}</span>` : ''}
           </div>
           ${item.note ? `<div class="trip-cost-note">${escapeHTML(item.note)}</div>` : ''}
@@ -4209,9 +4228,9 @@ function renderTripCosts() {
         <div class="trip-cost-sub">含已付款與未付款</div>
       </div>
       <div class="trip-cost-card">
-        <div class="trip-cost-label">已付款 / 待付款</div>
+        <div class="trip-cost-label">已付款 / 未付款</div>
         <div class="trip-cost-amount">NT$ ${formatTWD(paidTotal)}</div>
-        <div class="trip-cost-sub">待付款 NT$ ${formatTWD(unpaidTotal)}</div>
+        <div class="trip-cost-sub">未付款 NT$ ${formatTWD(unpaidTotal)}</div>
       </div>
     </div>
     <div class="trip-cost-cats">${catsHtml}</div>
@@ -4242,6 +4261,12 @@ function saveTripCost() {
   closeTripCostModal();
   afterDataChange();
 }
+function toggleTripCostPaid(i) {
+  if (i < 0 || i >= expenses.length) return;
+  expenses[i].status = '已付款';
+  afterDataChange();
+}
+
 function deleteTripCost(i) {
   if (i < 0 || i >= expenses.length) return;
   if (!confirm('確認刪除這筆旅程記帳？')) return;
@@ -4445,7 +4470,7 @@ window.resetLocalData = resetLocalData;
 Object.assign(window, {
   openAddModal, openEditModal, closeItemModal, saveItem, deleteItem,
   openExpenseModal, closeExpenseModal, saveExpense, deleteExpense,
-  openTripCostModal, closeTripCostModal, saveTripCost, deleteTripCost,
+  openTripCostModal, closeTripCostModal, saveTripCost, toggleTripCostPaid, deleteTripCost,
   openTodoModal, closeTodoModal, saveTodo,
   openShoppingModal, closeShoppingModal, saveShoppingItem, previewShoppingImage,
   switchUtilityPanel, selectWeatherCity
